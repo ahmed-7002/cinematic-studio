@@ -98,7 +98,7 @@ const ContentCard = ({ content, contentType, onClick }) => {
   return (
     <div 
       onClick={() => onClick(content)}
-      className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer overflow-hidden border border-white/20 dark:border-gray-700/50"
+      className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-lg cursor-pointer overflow-hidden border border-white/20 dark:border-gray-700/50 transform-gpu will-change-transform transition-transform duration-200 hover:scale-105 hover:shadow-2xl"
     >
       <div className="aspect-[2/3] overflow-hidden relative">
         {imageSizes ? (
@@ -118,7 +118,7 @@ const ContentCard = ({ content, contentType, onClick }) => {
             <img
               src={imageSizes.fallback}
               alt={title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              className="w-full h-full object-cover transform-gpu will-change-transform transition-transform duration-300 group-hover:scale-110"
               loading="lazy"
               decoding="async"
               onError={handleImageError}
@@ -135,7 +135,7 @@ const ContentCard = ({ content, contentType, onClick }) => {
         
         {/* Content type indicator */}
         <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
-          <div className={`p-1 sm:p-2 rounded-full backdrop-blur-sm ${
+          <div className={`p-1 sm:p-2 rounded-full backdrop-blur-sm transform-gpu ${
             contentType === CONTENT_TYPES.MOVIE 
               ? 'bg-blue-500/80 text-white' 
               : 'bg-purple-500/80 text-white'
@@ -147,8 +147,8 @@ const ContentCard = ({ content, contentType, onClick }) => {
           </div>
         </div>
         
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <div className="absolute bottom-1 left-1 right-1 sm:bottom-2 sm:left-2 sm:right-2 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+        <div className="absolute bottom-1 left-1 right-1 sm:bottom-2 sm:left-2 sm:right-2 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-200 transform-gpu will-change-transform">
           <div className="flex items-center justify-between text-white text-xs sm:text-sm">
             <div className="flex items-center">
               <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400 mr-1" />
@@ -909,7 +909,7 @@ const App = () => {
     <div className="min-h-screen transition-all duration-300 relative">
       {/* Background Image with Overlay */}
       <div 
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat transform-gpu"
         style={{
           backgroundImage: `url(${DARK_BG})`
         }}
@@ -918,9 +918,9 @@ const App = () => {
       </div>
       
       {/* Content */}
-      <div className="relative z-10">
+      <div className="relative z-10 transform-gpu">
         {/* Navigation */}
-        <nav className="bg-black/20 backdrop-blur-xl border-b border-gray-700/50 sticky top-0 z-50">
+        <nav className="bg-black/20 backdrop-blur-xl border-b border-gray-700/50 sticky top-0 z-50 transform-gpu">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
               <div className="flex items-center">
@@ -952,7 +952,7 @@ const App = () => {
                     value={searchQuery}
                     onChange={handleSearch}
                     placeholder={`Search for ${contentType === CONTENT_TYPES.MOVIE ? 'movies' : 'TV shows'}...`}
-                    className="block w-full pl-12 pr-4 py-4 border-2 border-gray-600/50 rounded-2xl bg-gray-800/80 backdrop-blur-md text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300 text-lg font-medium"
+                    className="block w-full pl-12 pr-4 py-4 border-2 border-gray-600/50 rounded-2xl bg-gray-800/80 backdrop-blur-md text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-200 text-lg font-medium"
                   />
                 </div>
               </div>
@@ -977,17 +977,17 @@ const App = () => {
                   value={searchQuery}
                   onChange={handleSearch}
                   placeholder={`Search for ${contentType === CONTENT_TYPES.MOVIE ? 'movies' : 'TV shows'}...`}
-                  className="block w-full pl-12 pr-4 py-3 border-2 border-gray-600/50 rounded-xl bg-gray-800/80 backdrop-blur-md text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300 font-medium"
+                  className="block w-full pl-12 pr-4 py-3 border-2 border-gray-600/50 rounded-xl bg-gray-800/80 backdrop-blur-md text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-200 font-medium"
                 />
               </div>
             </div>
           </div>
         </nav>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 transform-gpu">
           {/* API Key Warning */}
           {!API_KEY && (
-            <div className="bg-yellow-100/90 dark:bg-yellow-900/30 backdrop-blur-md border-2 border-yellow-300 dark:border-yellow-700 rounded-2xl p-6 mb-8 shadow-xl transition-colors duration-300">
+            <div className="bg-yellow-100/90 dark:bg-yellow-900/30 backdrop-blur-md border-2 border-yellow-300 dark:border-yellow-700 rounded-2xl p-6 mb-8 shadow-xl transition-colors duration-200 transform-gpu">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center">
@@ -1056,7 +1056,7 @@ const App = () => {
           {/* Content Grid */}
           {!loading && content.length > 0 && (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-4 md:gap-6 lg:gap-8 transform-gpu">
                 {content.map(item => (
                   <ContentCard
                     key={item.id}
