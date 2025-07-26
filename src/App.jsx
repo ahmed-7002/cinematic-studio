@@ -3,7 +3,7 @@ import { Search, Moon, Sun, Star, Calendar, Globe, Filter, ChevronLeft, ChevronR
 
 // TMDB API Configuration
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 const API_KEY = '5439c598007c64a9e335cc7be4078732'; // <-- Insert your TMDB API key here
 
 // Background image from Unsplash
@@ -67,14 +67,33 @@ const useDebounce = (value, delay) => {
   return debouncedValue;
 };
 
+// Image size utility function
+const getImageSizes = (posterPath) => {
+  if (!posterPath) return null;
+  
+  return {
+    mobile: `${TMDB_IMAGE_BASE_URL}/w342${posterPath}`,
+    tablet: `${TMDB_IMAGE_BASE_URL}/w500${posterPath}`,
+    desktop: `${TMDB_IMAGE_BASE_URL}/w780${posterPath}`,
+    fallback: `${TMDB_IMAGE_BASE_URL}/w500${posterPath}`
+  };
+};
+
 // Content Card Component (handles both movies and TV shows)
 const ContentCard = ({ content, contentType, onClick }) => {
-  const posterUrl = content.poster_path 
-    ? `${TMDB_IMAGE_BASE_URL}${content.poster_path}`
-    : null;
-
+  const imageSizes = getImageSizes(content.poster_path);
   const title = contentType === CONTENT_TYPES.MOVIE ? content.title : content.name;
   const releaseDate = contentType === CONTENT_TYPES.MOVIE ? content.release_date : content.first_air_date;
+
+  const handleImageError = (e) => {
+    e.target.parentElement.innerHTML = `
+      <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+        <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+        </svg>
+      </div>
+    `;
+  };
 
   return (
     <div 
@@ -82,21 +101,29 @@ const ContentCard = ({ content, contentType, onClick }) => {
       className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer overflow-hidden border border-white/20 dark:border-gray-700/50"
     >
       <div className="aspect-[2/3] overflow-hidden relative">
-        {posterUrl ? (
-          <img
-            src={posterUrl}
-            alt={title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            onError={(e) => {
-              e.target.parentElement.innerHTML = `
-                <div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                  <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                  </svg>
-                </div>
-              `;
-            }}
-          />
+        {imageSizes ? (
+          <picture>
+            <source 
+              media="(max-width: 640px)" 
+              srcSet={imageSizes.mobile}
+            />
+            <source 
+              media="(max-width: 1024px)" 
+              srcSet={imageSizes.tablet}
+            />
+            <source 
+              media="(min-width: 1025px)" 
+              srcSet={imageSizes.desktop}
+            />
+            <img
+              src={imageSizes.fallback}
+              alt={title}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              loading="lazy"
+              decoding="async"
+              onError={handleImageError}
+            />
+          </picture>
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
             {contentType === CONTENT_TYPES.MOVIE ? 
@@ -192,17 +219,36 @@ const ContentDetailModal = ({ content, contentType, isOpen, onClose }) => {
   const creator = contentDetails?.created_by?.[0];
   const mainCast = credits?.cast?.slice(0, 6) || [];
 
+  // Get optimized poster image sizes for modal
+  const posterImageSizes = getImageSizes(content.poster_path);
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg rounded-3xl max-w-5xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20 dark:border-gray-700/50">
         <div className="relative">
           {backdropUrl && (
             <div className="h-32 sm:h-48 md:h-64 lg:h-80 overflow-hidden rounded-t-3xl relative">
-              <img
-                src={backdropUrl}
-                alt={title}
-                className="w-full h-full object-cover"
-              />
+              <picture>
+                <source 
+                  media="(max-width: 640px)" 
+                  srcSet={backdropUrl.replace('w1280', 'w780')}
+                />
+                <source 
+                  media="(max-width: 1024px)" 
+                  srcSet={backdropUrl.replace('w1280', 'w1280')}
+                />
+                <source 
+                  media="(min-width: 1025px)" 
+                  srcSet={backdropUrl}
+                />
+                <img
+                  src={backdropUrl}
+                  alt={title}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </picture>
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60" />
             </div>
           )}
@@ -252,14 +298,39 @@ const ContentDetailModal = ({ content, contentType, isOpen, onClose }) => {
               <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
                 <div className="lg:w-1/3">
                   <div className="sticky top-8">
-                    <img
-                      src={content.poster_path ? `${TMDB_IMAGE_BASE_URL}${content.poster_path}` : null}
-                      alt={title}
-                      className="w-full max-w-xs mx-auto lg:max-w-none rounded-2xl shadow-2xl"
-                      onError={(e) => {
-                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDMwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxyZWN0IHg9IjUwIiB5PSIxMDAiIHdpZHRoPSIyMDAiIGhlaWdodD0iMjUwIiBmaWxsPSIjRTVFN0VCIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iMjQwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOUI5Q0EwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K';
-                      }}
-                    />
+                    {posterImageSizes ? (
+                      <picture>
+                        <source 
+                          media="(max-width: 640px)" 
+                          srcSet={posterImageSizes.mobile}
+                        />
+                        <source 
+                          media="(max-width: 1024px)" 
+                          srcSet={posterImageSizes.tablet}
+                        />
+                        <source 
+                          media="(min-width: 1025px)" 
+                          srcSet={posterImageSizes.desktop}
+                        />
+                        <img
+                          src={posterImageSizes.fallback}
+                          alt={title}
+                          className="w-full max-w-xs mx-auto lg:max-w-none rounded-2xl shadow-2xl"
+                          loading="lazy"
+                          decoding="async"
+                          onError={(e) => {
+                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDMwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxyZWN0IHg9IjUwIiB5PSIxMDAiIHdpZHRoPSIyMDAiIGhlaWdodD0iMjUwIiBmaWxsPSIjRTVFN0VCIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iMjQwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOUI5Q0EwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K';
+                          }}
+                        />
+                      </picture>
+                    ) : (
+                      <div className="w-full max-w-xs mx-auto lg:max-w-none aspect-[2/3] bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 rounded-2xl shadow-2xl flex items-center justify-center">
+                        {contentType === CONTENT_TYPES.MOVIE ? 
+                          <Film className="w-16 h-16 text-gray-400 dark:text-gray-500" /> :
+                          <Tv className="w-16 h-16 text-gray-400 dark:text-gray-500" />
+                        }
+                      </div>
+                    )}
                   </div>
                 </div>
                 
