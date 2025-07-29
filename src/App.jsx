@@ -106,6 +106,174 @@ const getImageSizes = (posterPath) => {
   };
 };
 
+// Cast Member Card Component
+const CastMemberCard = ({ castMember }) => {
+  const profileImageSizes = castMember.profile_path ? {
+    mobile: `${TMDB_IMAGE_BASE_URL}/w185${castMember.profile_path}`,
+    tablet: `${TMDB_IMAGE_BASE_URL}/w342${castMember.profile_path}`,
+    desktop: `${TMDB_IMAGE_BASE_URL}/w500${castMember.profile_path}`,
+    fallback: `${TMDB_IMAGE_BASE_URL}/w185${castMember.profile_path}`
+  } : null;
+
+  return (
+    <div className="group flex-shrink-0 cursor-pointer transform-gpu transition-all duration-300 hover:scale-105 hover:z-10 w-32 sm:w-40 md:w-44 lg:w-48">
+      <div className="relative bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-xl rounded-xl sm:rounded-2xl overflow-hidden border border-gray-800/50 shadow-xl hover:shadow-purple-500/20 transition-all duration-300">
+        {/* Profile Image */}
+        <div className="aspect-[3/4] overflow-hidden relative">
+          {profileImageSizes ? (
+            <picture>
+              <source media="(max-width: 640px)" srcSet={profileImageSizes.mobile} />
+              <source media="(max-width: 1024px)" srcSet={profileImageSizes.tablet} />
+              <source media="(min-width: 1025px)" srcSet={profileImageSizes.desktop} />
+              <img
+                src={profileImageSizes.fallback}
+                alt={castMember.name}
+                className="w-full h-full object-cover transform-gpu transition-transform duration-500 group-hover:scale-110"
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+              <Users className="w-8 h-8 sm:w-12 sm:h-12 text-gray-600" />
+            </div>
+          )}
+          
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </div>
+        
+        {/* Cast Info */}
+        <div className="p-2 sm:p-3">
+          <h4 className="font-bold text-white mb-1 line-clamp-2 leading-tight text-xs sm:text-sm group-hover:text-purple-400 transition-colors duration-300">
+            {castMember.name}
+          </h4>
+          <p className="text-gray-400 text-xs line-clamp-2 leading-relaxed">
+            {castMember.character || 'Unknown Character'}
+          </p>
+        </div>
+        
+        {/* Hover Effect Border */}
+        <div className="absolute inset-0 rounded-xl sm:rounded-2xl border-2 border-transparent group-hover:border-purple-500/50 transition-all duration-300" />
+      </div>
+    </div>
+  );
+};
+
+// Cast Section Component
+const CastSection = ({ credits, loading }) => {
+  const scrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScrollButtons = useCallback(() => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkScrollButtons();
+    const scrollContainer = scrollRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', checkScrollButtons);
+      return () => scrollContainer.removeEventListener('scroll', checkScrollButtons);
+    }
+  }, [checkScrollButtons, credits]);
+
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const scrollAmount = 200;
+      const targetScrollLeft = scrollRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+      scrollRef.current.scrollTo({
+        left: targetScrollLeft,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  if (loading || !credits || !credits.cast || credits.cast.length === 0) {
+    return null;
+  }
+
+  const displayCast = credits.cast.slice(0, 15); // Limit to 15 cast members
+
+  return (
+    <div className="mb-8 sm:mb-12">
+      {/* Cast Header */}
+      <div className="flex items-center justify-between mb-4 sm:mb-6 px-3 sm:px-4 lg:px-8">
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <h3 className="text-lg sm:text-2xl lg:text-3xl font-bold text-white">
+            Cast
+          </h3>
+          <div className="px-2 py-1 sm:px-3 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-400 border border-purple-500/30">
+            {displayCast.length} {displayCast.length === 1 ? 'Actor' : 'Actors'}
+          </div>
+        </div>
+        
+        {/* Desktop Navigation Buttons */}
+        <div className="hidden md:flex items-center space-x-2">
+          <button
+            onClick={() => scroll('left')}
+            disabled={!canScrollLeft}
+            className={`p-2 rounded-xl transition-all duration-300 ${
+              canScrollLeft 
+                ? 'bg-gray-800/60 hover:bg-purple-600 text-white shadow-lg hover:scale-105' 
+                : 'bg-gray-800/30 text-gray-600 cursor-not-allowed'
+            }`}
+          >
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+          <button
+            onClick={() => scroll('right')}
+            disabled={!canScrollRight}
+            className={`p-2 rounded-xl transition-all duration-300 ${
+              canScrollRight 
+                ? 'bg-gray-800/60 hover:bg-purple-600 text-white shadow-lg hover:scale-105' 
+                : 'bg-gray-800/30 text-gray-600 cursor-not-allowed'
+            }`}
+          >
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Horizontal Scroll Container */}
+      <div className="relative group">
+        <div 
+          ref={scrollRef}
+          className="flex space-x-2 sm:space-x-4 overflow-x-auto scrollbar-hide scroll-smooth px-3 sm:px-4 lg:px-8 pb-2"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        >
+          {displayCast.map(castMember => (
+            <CastMemberCard
+              key={castMember.id || castMember.cast_id}
+              castMember={castMember}
+            />
+          ))}
+        </div>
+
+        {/* Mobile Scroll Indicators */}
+        <div className="flex justify-center mt-4 md:hidden">
+          <div className="flex space-x-1">
+            {Array.from({ length: Math.min(Math.ceil(displayCast.length / 3), 5) }).map((_, index) => (
+              <div
+                key={index}
+                className="w-1 h-1 sm:w-2 sm:h-2 bg-gray-600 rounded-full opacity-30"
+              ></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Smart Pagination Component
 const SmartPagination = ({ currentPage, totalPages, onPageChange }) => {
   // Calculate which pages to show (max 5 page numbers)
@@ -989,6 +1157,11 @@ const ContentDetailView = ({ content, contentType, onBack }) => {
           </div>
         </div>
       </div>
+
+      {/* Cast Section */}
+      <div className="relative z-10 bg-gradient-to-b from-black to-gray-900">
+        <CastSection credits={credits} loading={loading} />
+      </div>
     </div>
   );
 };
@@ -1716,7 +1889,7 @@ const App = () => {
                   </button>
 
                   {/* Desktop Content Toggle */}
-                  <div className="hidden lg:flex">
+                   <div className="hidden lg:flex ml-16 sm:ml-24">
                     <ContentTypeToggle 
                       contentType={contentType}
                       onContentTypeChange={handleContentTypeChange}
